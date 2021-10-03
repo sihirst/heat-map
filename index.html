@@ -1,0 +1,94 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Heat maps with markers</title>
+    <style>
+      body, html { margin:0; padding:0; height:100%;}
+      body { font-family:sans-serif; }
+      body * { font-weight:200;}
+      h1 { position:absolute; background:white; padding:10px;}
+      #map { height:100%; }
+      .leaflet-container {
+        background: rgba(0,0,0,.8) !important;
+      }
+      h1 { position:absolute; background:black; color:white; padding:10px; font-weight:200; z-index:10000;}
+      #all-examples-info { position:absolute; background:white; font-size:16px; padding:20px; top:100px; width:350px; line-height:150%; border:1px solid rgba(0,0,0,.2);}
+    </style>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <script src="build/heatmap.js"></script>
+    <script src="plugins/leaflet-heatmap/leaflet-heatmap.js"></script>
+  </head>
+  <body>
+   <h1>HEATMAP</h1>
+
+   <div id="map"></div>
+
+   <div id="all-examples-info">
+          <strong style="font-weight:bold;line-height:200%;font-size:18px;">Map description...</strong> <br />For support contact simon@sihirst.co.uk
+        </div>
+    <script>
+
+      window.onload = function() {
+
+
+
+        var string = {
+          max: 2, //CHANGE THIS
+          data: [{ lat:54.8921592754132, lng:-1.409322,count: 2}]};
+
+        var baseLayer = L.tileLayer(
+          'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+            maxZoom: 18
+          }
+        );
+
+
+        var srs1000147 = L.marker([54.8921592754132,-1.409322]).bindPopup('Marker');
+
+
+
+
+// INCLUDE THIS
+
+        // INPUT YOUR DATA ABOVE HERE
+
+        var marker = L.layerGroup([srs1000147]);
+
+        var cfg = {
+          // radius should be small ONLY if scaleRadius is true (or small radius is intended)
+          "radius": 100,
+          "maxOpacity": .5,
+          // scales the radius based on map zoom
+          "scaleRadius": false,
+          // if set to false the heatmap uses the global maximum for colorization
+          // if activated: uses the data maximum within the current map boundaries
+          //   (there will always be a red spot with useLocalExtremas true)
+          "useLocalExtrema": true,
+          // which field name in your data represents the latitude - default "lat"
+          latField: 'lat',
+          // which field name in your data represents the longitude - default "lng"
+          lngField: 'lng',
+          // which field name in your data represents the data value - default "value"
+          valueField: 'count'
+        };
+
+
+        var heatmapLayer = new HeatmapOverlay(cfg);
+
+        var map = new L.Map('map', {
+          center: new L.LatLng(53.7306, -1.2345),
+          zoom: 6,
+          layers: [baseLayer, marker, heatmapLayer]
+        });
+
+        heatmapLayer.setData(string);
+
+        // make accessible for debugging
+        layer = heatmapLayer;
+      };
+    </script>
+  </body>
+</html>
