@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -13,82 +13,105 @@
         background: rgba(0,0,0,.8) !important;
       }
       h1 { position:absolute; background:black; color:white; padding:10px; font-weight:200; z-index:10000;}
-      #all-examples-info { position:absolute; background:white; font-size:16px; padding:20px; top:100px; width:350px; line-height:150%; border:1px solid rgba(0,0,0,.2);}
+      #all-examples-info { position:absolute; background:white; font-size:16px; padding:20px; top:100px; width:350px; line-height:150%; margin-top:50px; border:1px solid rgba(0,0,0,.2); z-index:99999;}
     </style>
-    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
-    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <script src="build/heatmap.js"></script>
     <script src="plugins/leaflet-heatmap/leaflet-heatmap.js"></script>
+    
+
+  
   </head>
   <body>
-   <h1>HEATMAP</h1>
+    
+    
+        
+    <h1 style="margin-top:82px">HEATMAP</h1>
 
-   <div id="map"></div>
+    <div id="all-examples-info">
+      <strong style="font-weight:bold;line-height:200%;font-size:18px;">Map description...</strong> <br />For support contact simon@sihirst.co.uk
+    </div>
+        
 
-   <div id="all-examples-info">
-          <strong style="font-weight:bold;line-height:200%;font-size:18px;">Map description...</strong> <br />For support contact simon@sihirst.co.uk
-        </div>
+    
+    <div id="map"></div>
+
+    
     <script>
+  window.onload = function() {
+    var baseLayer = L.tileLayer(
+      'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+        maxZoom: 18
+      }
+    );
 
-      window.onload = function() {
+    var map = new L.Map('map', {
+      center: new L.LatLng(53.7306, -1.2345),
+      zoom: 6,
+      layers: [baseLayer]
+    });
 
+    // Fetch the data from example.json
+    fetch('example.json')
+      .then((response) => response.json())
+      .then((data) => {
+        var markers = [];
 
+        // Loop through the data and create markers with labels
+        data.forEach((item) => {
+          var marker = L.marker([item.Lat, item.Lng]).bindPopup(item.Name+' - Count: '+item.Count);
+          markers.push(marker);
+        });
 
-        var string = {
-          max: 2, //CHANGE THIS
-          data: [{ lat:54.8921592754132, lng:-1.409322,count: 2}]};
+        // Add markers to a layer group
+        var markerLayer = L.layerGroup(markers);
 
-        var baseLayer = L.tileLayer(
-          'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
-            maxZoom: 18
-          }
-        );
+        // Add the marker layer to the map
+        map.addLayer(markerLayer);
 
-
-        var srs1000147 = L.marker([54.8921592754132,-1.409322]).bindPopup('Marker');
-
-
-
-
-// INCLUDE THIS
-
-        // INPUT YOUR DATA ABOVE HERE
-
-        var marker = L.layerGroup([srs1000147]);
+        // Convert the data to the required format for the heatmap
+        var heatmapData = {
+          max: 2,
+          data: data.map((item) => ({ lat: item.Lat, lng: item.Lng, count: item.Count }))
+        };
 
         var cfg = {
-          // radius should be small ONLY if scaleRadius is true (or small radius is intended)
           "radius": 100,
-          "maxOpacity": .5,
-          // scales the radius based on map zoom
+          "maxOpacity": 0.5,
           "scaleRadius": false,
-          // if set to false the heatmap uses the global maximum for colorization
-          // if activated: uses the data maximum within the current map boundaries
-          //   (there will always be a red spot with useLocalExtremas true)
           "useLocalExtrema": true,
-          // which field name in your data represents the latitude - default "lat"
           latField: 'lat',
-          // which field name in your data represents the longitude - default "lng"
           lngField: 'lng',
-          // which field name in your data represents the data value - default "value"
           valueField: 'count'
         };
 
-
         var heatmapLayer = new HeatmapOverlay(cfg);
 
-        var map = new L.Map('map', {
-          center: new L.LatLng(53.7306, -1.2345),
-          zoom: 6,
-          layers: [baseLayer, marker, heatmapLayer]
-        });
+        // Add the heatmap layer to the map
+        map.addLayer(heatmapLayer);
 
-        heatmapLayer.setData(string);
+        // Set the data for the heatmap layer
+        heatmapLayer.setData(heatmapData);
 
-        // make accessible for debugging
-        layer = heatmapLayer;
-      };
-    </script>
+        // Add search control to the map
+        var searchControl = L.Control.geocoder({
+          defaultMarkGeocode: false,
+          position: 'topright', // Change this to adjust the position of the search control
+          placeholder: 'Search for places...'
+        }).on('markgeocode', function(e) {
+          var latlng = e.geocode.center;
+          map.setView(latlng, 12); // Set the map view to the searched location with zoom level 12
+        }).addTo(map);
+
+        // Move the zoom control to the right-bottom corner
+        map.zoomControl.setPosition('bottomright');
+        
+      });
+  };
+</script>
   </body>
 </html>
